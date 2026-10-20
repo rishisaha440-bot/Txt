@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hindi Novel Translator - Continuous Long Page</title>
+    <title>Hindi Novel Translator - Super Fast Continuous Page</title>
     
     <link rel="manifest" href="manifest.json">
 
@@ -142,7 +142,7 @@
             height: 100%;
             width: 0%;
             background: linear-gradient(90deg, #ff9800, #10b981);
-            transition: width 0.1s ease;
+            transition: width 0.15s ease;
         }
 
         .progress-text {
@@ -203,7 +203,7 @@
     <div class="container">
         <header>
             <h1>📖 Hindi Novel Translator</h1>
-            <p style="color:#aaa; font-size:13px; margin:0;">Continuous Long Single Page Reader • Zero Line Skip • Auto H_ File Saver</p>
+            <p style="color:#aaa; font-size:13px; margin:0;">Super Fast Parallel Translator • Continuous Long Page • Auto H_ File Saver</p>
         </header>
 
         <!-- Google Translate Widget -->
@@ -244,7 +244,7 @@
         <div class="reader-box" id="novelContent">
             <div class="placeholder-text">
                 Yahan aapka poora Novel ek hi long continuous page me load hoga.<br>
-                Upar se <b>.txt file upload</b> karein aur Google Translate se <b>Hindi</b> select karein,<br>ya <b>⚡ Fast Full Translate</b> button click karein!
+                Upar se <b>.txt file upload</b> karein aur turant translate karne ke liye <b>⚡ Fast Full Translate</b> button click karein!
             </div>
         </div>
     </div>
@@ -296,11 +296,13 @@
             const readerBox = document.getElementById('novelContent');
             readerBox.innerHTML = '';
 
+            const fragment = document.createDocumentFragment();
             allParagraphs.forEach(pText => {
                 const p = document.createElement('p');
                 p.textContent = pText;
-                readerBox.appendChild(p);
+                fragment.appendChild(p);
             });
+            readerBox.appendChild(fragment);
 
             updateStats(fullText);
         }
@@ -312,7 +314,7 @@
             document.getElementById('statChars').innerText = `Characters: ${charCount.toLocaleString()}`;
         }
 
-        // Fast Batch Translation API (Translates whole page line-by-line in continuous stream)
+        // High-Speed Parallel Batch Translation API Engine
         async function startFastBatchTranslation() {
             if (allParagraphs.length === 0) {
                 alert("Pehle koi text load ya upload karein!");
@@ -329,32 +331,47 @@
             progressText.innerText = '0%';
             readerBox.innerHTML = '';
 
-            for (let i = 0; i < allParagraphs.length; i++) {
-                let originalText = allParagraphs[i];
-                let translatedText = originalText;
+            const BATCH_SIZE = 8; // Parallel 8 paragraphs fast translation
+            let completed = 0;
 
-                try {
-                    const response = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=hi&dt=t&q=${encodeURIComponent(originalText)}`);
-                    const data = await response.json();
-                    if (data && data[0]) {
-                        translatedText = data[0].map(item => item[0]).join('');
+            for (let i = 0; i < allParagraphs.length; i += BATCH_SIZE) {
+                const batch = allParagraphs.slice(i, i + BATCH_SIZE);
+
+                // Fetch parallel requests
+                const batchPromises = batch.map(async (text) => {
+                    try {
+                        const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=hi&dt=t&q=${encodeURIComponent(text)}`);
+                        const data = await res.json();
+                        if (data && data[0]) {
+                            return data[0].map(item => item[0]).join('');
+                        }
+                    } catch (err) {
+                        console.error("Translation error on batch line:", err);
                     }
-                } catch (err) {
-                    console.error("Translation error on line:", err);
-                }
+                    return text;
+                });
 
-                const p = document.createElement('p');
-                p.textContent = translatedText;
-                readerBox.appendChild(p);
+                const results = await Promise.all(batchPromises);
 
-                const percent = Math.round(((i + 1) / allParagraphs.length) * 100);
+                const fragment = document.createDocumentFragment();
+                results.forEach(translatedText => {
+                    const p = document.createElement('p');
+                    p.textContent = translatedText;
+                    fragment.appendChild(p);
+                });
+                readerBox.appendChild(fragment);
+
+                completed += batch.length;
+                if (completed > allParagraphs.length) completed = allParagraphs.length;
+
+                const percent = Math.round((completed / allParagraphs.length) * 100);
                 progressBar.style.width = percent + '%';
                 progressText.innerText = percent + '%';
             }
 
             setTimeout(() => {
                 progressContainer.style.display = 'none';
-            }, 1200);
+            }, 1000);
         }
 
         // Clear Content
